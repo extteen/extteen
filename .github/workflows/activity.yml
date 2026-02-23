@@ -19,7 +19,7 @@ jobs:
           python <<EOF
           import requests
             
-          url = "https://example.com"  # change this
+          url = "https://soybooru.com"  # change this
             
           headers = {
               "User-Agent": "Mozilla/5.0"
