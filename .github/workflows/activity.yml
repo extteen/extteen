@@ -12,22 +12,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug fetch
+      - name: Fetch page using HTTP/2
         run: |
-          pip install requests
+          URL="https://soybooru.com"
 
-          python <<EOF
-          import requests
-            
-          url = "https://soybooru.com"  # change this
-            
-          headers = {
-              "User-Agent": "Mozilla/5.0"
-          }
-            
-          r = requests.get(url, headers=headers)
-            
-          print("STATUS:", r.status_code)
-          print("---- FIRST 1000 CHARS ----")
-          print(r.text[:1000])
-          EOF
+          HTML=$(curl --http2 -s -L \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36" \
+            -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" \
+            -H "Accept-Language: en-US,en;q=0.9" \
+            "$URL")
+
+          BLOCK=$(echo "$HTML" | tr '\n' ' ' | sed -n 's/.*<div[^>]*id="counter"[^>]*>\(.*\)<\/div>.*/\1/p')
+
+          COUNT=$(echo "$BLOCK" | grep -o 'alt="[0-9]*"' | grep -o '[0-9]*' | tr -d '\n')
+
+          if [ -z "$COUNT" ]; then
+            echo "Counter not found!"
+            exit 1
+          fi
+
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          mkdir -p activity
+          echo "$TS,$COUNT" >> activity/data.csv
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add activity/data.csv
+          git commit -m "Update activity data" || echo "No change"
+          git push
