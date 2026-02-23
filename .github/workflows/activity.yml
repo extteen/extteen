@@ -1,61 +1,19 @@
-name: Fetch Counter
-
-on:
-  schedule:
-    - cron: "*/30 * * * *"
-  workflow_dispatch:
-
-jobs:
-  fetch:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch and parse with Python
+      - name: Debug fetch
         run: |
-          pip install requests beautifulsoup4
+          pip install requests
 
           python <<EOF
           import requests
-          from bs4 import BeautifulSoup
-          from datetime import datetime
-          import os
           
-          url = "https://soybooru.com"
+          url = "https://example.com"  # change this
           
           headers = {
               "User-Agent": "Mozilla/5.0"
           }
           
           r = requests.get(url, headers=headers)
-          html = r.text
           
-          soup = BeautifulSoup(html, "html.parser")
-          
-          counter_div = soup.find(id="counter")
-          
-          if counter_div is None:
-              print("Counter not found!")
-              exit(1)
-          
-          digits = [img.get("alt") for img in counter_div.find_all("img")]
-          count = "".join(digits)
-          
-          timestamp = datetime.utcnow().isoformat() + "Z"
-          
-          os.makedirs("activity", exist_ok=True)
-          
-          with open("activity/data.csv", "a") as f:
-              f.write(f"{timestamp},{count}\n")
-          
-          print("Saved:", timestamp, count)
+          print("STATUS:", r.status_code)
+          print("---- FIRST 1000 CHARS ----")
+          print(r.text[:1000])
           EOF
-
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add activity/data.csv
-          git commit -m "Update activity data" || echo "No change"
-          git push
