@@ -12,20 +12,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch page and extract counter
+      - name: Fetch and parse with Python
         run: |
-          URL="https://soybooru.com"
+          pip install requests beautifulsoup4
 
-          HTML=$(curl -s -L \
-            -A "Mozilla/5.0 (X11; Linux x86_64)" \
-            "$URL")
-          BLOCK=$(echo "$HTML" | grep -oP '<div[^>]*id="counter"[^>]*>.*?</div>')
-          COUNT=$(echo "$BLOCK" | grep -oP 'alt="\K[0-9]+' | tr -d '\n')
-
-          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          mkdir -p activity
-          echo "$TS,$COUNT" >> activity/data.csv
+          python <<EOF
+          import requests
+          from bs4 import BeautifulSoup
+          from datetime import datetime
+          import os
+          
+          url = "https://soybooru.com"
+          
+          headers = {
+              "User-Agent": "Mozilla/5.0"
+          }
+          
+          r = requests.get(url, headers=headers)
+          html = r.text
+          
+          soup = BeautifulSoup(html, "html.parser")
+          
+          counter_div = soup.find(id="counter")
+          
+          if counter_div is None:
+              print("Counter not found!")
+              exit(1)
+          
+          digits = [img.get("alt") for img in counter_div.find_all("img")]
+          count = "".join(digits)
+          
+          timestamp = datetime.utcnow().isoformat() + "Z"
+          
+          os.makedirs("activity", exist_ok=True)
+          
+          with open("activity/data.csv", "a") as f:
+              f.write(f"{timestamp},{count}\n")
+          
+          print("Saved:", timestamp, count)
+          EOF
 
       - name: Commit changes
         run: |
