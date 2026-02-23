@@ -12,9 +12,9 @@ jobs:
         run: |
           echo "Testing HTTP/2 request..."
           
-          curl --http2 -I https://example.com
+          curl --http2 -I https://soyjak.st
           
           echo ""
           echo "Fetching content..."
           
-          curl --http2 -s https://example.com | head -n 20
+          curl --http2 -s https://soyjak.st | head -n 20
