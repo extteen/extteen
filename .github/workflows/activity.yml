@@ -15,51 +15,16 @@ jobs:
       - name: Fetch page and parse
         run: |
           pip install requests beautifulsoup4
-
           python <<EOF
           import requests
-          from bs4 import BeautifulSoup
-          from datetime import datetime
-          import os
-          import csv
-          
-          url = "https://soyjak.st/"
-          
+          url = "https://soyjak.st"  # change this
           headers = {
               "User-Agent": "Mozilla/5.0",
               "Accept": "text/html,application/xhtml+xml",
               "Accept-Language": "en-US,en;q=0.9"
           }
-          
           r = requests.get(url, headers=headers)
-          html = r.text
-          soup = BeautifulSoup(html, "html.parser")
-          
-          rows = soup.find_all("tr")[1:]  # skip header row
-          timestamp = datetime.utcnow().isoformat() + "Z"
-          
-          os.makedirs("activity", exist_ok=True)
-          csvfile = "activity/boards.csv"
-          
-          with open(csvfile, "a", newline="") as f:
-              writer = csv.writer(f)
-              for row in rows:
-                  tds = row.find_all("td")
-                  if len(tds) < 5:
-                      continue
-                  board = tds[0].get_text(strip=True)
-                  pph = tds[2].get_text(strip=True)
-                  posters = tds[3].get_text(strip=True)
-                  total = tds[4].get_text(strip=True)
-                  writer.writerow([timestamp, board, pph, posters, total])
-          
-          print("Saved data for", len(rows), "boards at", timestamp)
+          print("STATUS:", r.status_code)
+          print("---- FIRST 1000 CHARS ----")
+          print(r.text[:1000])
           EOF
-
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add activity/boards.csv
-          git commit -m "Update board stats" || echo "No change"
-          git push
