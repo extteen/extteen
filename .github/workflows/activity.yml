@@ -14,7 +14,7 @@ jobs:
 
       - name: Fetch page and extract counter
         run: |
-          URL="https://example.com"
+          URL="https://soybooru.com"
 
           HTML=$(curl -s -L \
             -A "Mozilla/5.0 (X11; Linux x86_64)" \
